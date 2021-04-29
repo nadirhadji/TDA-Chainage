@@ -1,5 +1,4 @@
-public class ListeIndexe< E extends Comparable< E > > {
-
+public class ListeIndex< E extends Comparable< E > > {
 
     public boolean contient( E valeur ) {
         return false;

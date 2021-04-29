@@ -7,14 +7,6 @@ public class ListeMilieu< E extends Comparable< E > > {
     private Chainon<E> inferieur;
     private Chainon<E> superieur;
 
-    public void setInferieur(Chainon<E> inferieur) {
-        this.inferieur = inferieur;
-    }
-
-    public void setSuperieur(Chainon<E> superieur) {
-        this.superieur = superieur;
-    }
-
     /**
      * Initialise une {@code ListeMilieu} avec les chainons inferieur et superieur null.
      */
@@ -135,27 +127,261 @@ public class ListeMilieu< E extends Comparable< E > > {
         }
     }
 
-
+    /**
+     * Inserer un element dans la liste milieu courante
+     *
+     * @param valeur la valeur a ajouter dans la liste milieu
+     */
     public void inserer( E valeur ) {
+
+        int tailleDiff;
+
+        if(inferieur == null)
+            inferieur = new Chainon<E>(valeur);
+
+        else if ( inferieur.getElement().compareTo(valeur) > 0 )
+            insererInf(valeur);
+
+        else if (superieur == null)
+            superieur = new Chainon<E>(valeur);
+
+        else
+            insererSup(valeur);
+
+        equilibrerListeMilieu();
+
     }
 
+    /**
+     * Preserver la taille de inferieur et superieur egale ou sinon liste inferieur avec un element de plus.
+     */
+    public void equilibrerListeMilieu() {
 
+        int tailleDiff = taille(inferieur) - taille(superieur);
+
+        if(tailleDiff > 1)
+            deplacerMaxInferieur();
+        else if (tailleDiff == -1)
+            deplacerMinSuperieur();
+    }
+
+    /**
+     * Inserer un élement dans une liste chainée triée en ordre croissant
+     *
+     * @param valeur un element de type E
+     */
+    public void insererSup( E valeur) {
+
+        Chainon<E> ombre = null;
+        Chainon<E> courant = superieur;
+
+        while(courant != null && courant.getElement().compareTo(valeur) < 0 ) {
+            ombre = courant;
+            courant = courant.getSuivant();
+        }
+
+        Chainon<E> nouveau = new Chainon<>(valeur);
+
+        if(ombre == null) {
+            nouveau.setSuivant(courant);
+            superieur = nouveau;
+        }
+        else {
+            ombre.setSuivant(nouveau);
+            nouveau.setSuivant(courant);
+        }
+    }
+
+    /**
+     * Inserer un élement dans une liste chainée triée en ordre decroissant
+     *
+     * @param valeur
+     */
+    public void insererInf( E valeur) {
+
+        Chainon<E> ombre = null;
+        Chainon<E> courant = inferieur;
+
+        while(courant != null && courant.getElement().compareTo(valeur) > 0 ) {
+            ombre = courant;
+            courant = courant.getSuivant();
+        }
+
+        Chainon<E> nouveau = new Chainon<>(valeur);
+
+        if(ombre == null) {
+            nouveau.setSuivant(courant);
+            inferieur = nouveau;
+        }
+        else {
+            ombre.setSuivant(nouveau);
+            nouveau.setSuivant(courant);
+        }
+    }
+
+    /**
+     * Deplacer le premier élement de la liste infereur vers le premier élement de la liste superieur
+     */
+    public void deplacerMaxInferieur() {
+        Chainon<E> maxInferieur = inferieur;
+        inferieur = inferieur.getSuivant();
+        maxInferieur.setSuivant(superieur);
+        superieur = maxInferieur;
+    }
+
+    /**
+     * Deplacer le premier élement de la liste superieur vers le premier élement de la liste inferieur
+     */
+    public void deplacerMinSuperieur() {
+        Chainon<E> minSuperieur = superieur;
+        superieur = superieur.getSuivant();
+        minSuperieur.setSuivant(inferieur);
+        inferieur = minSuperieur;
+    }
+
+    /**
+     * Retourne la première valeur de la liste inférieure
+     *
+     * @return
+     */
     public E milieu() {
-        return null;
+
+        E resultat = null;
+
+        if(inferieur != null)
+            resultat = inferieur.getElement();
+
+        return resultat;
     }
 
-
+    /**
+     * Retourne la dernière valeur de la liste inférieure
+     *
+     * @return
+     */
     public E minima() {
-        return null;
+
+        E resultat = null;
+        Chainon<E> buffer = inferieur;
+
+        while(buffer != null) {
+            resultat = buffer.getElement();
+            buffer = buffer.getSuivant();
+        }
+
+        return resultat;
     }
 
-
+    /**
+     * Retourne la dernière valeur de la liste supérieure si elle n’est pas vide, sinon elle retourne la
+     * première valeur de la liste inférieure.
+     *
+     * @return
+     */
     public E maxima() {
-        return null;
+
+        E resultat = null;
+        Chainon<E> buffer = superieur;
+
+        if (superieur != null) {
+
+            while(buffer != null) {
+                resultat = buffer.getElement();
+                buffer = buffer.getSuivant();
+            }
+        }
+        else
+            resultat = milieu();
+
+        return resultat;
     }
 
+    /**
+     * Supprimer un element dans la ListeMilieu courante si il existe
+     *
+     * @param valeur valeur a supprimer
+     */
+    public void supprimer( E valeur) {
 
-    public void supprimer( E valeur ) {
+        if(inferieur != null && contient(valeur,inferieur))
+            supprimerInf(valeur);
+
+        else if(superieur != null && contient(valeur,superieur))
+            supprimerSup(valeur);
+
+        equilibrerListeMilieu();
+    }
+
+    /**
+     * Supprimer un element dans la liste inferieur
+     *
+     * @param valeur element a supprimer de la liste inferieur
+     */
+    public void supprimerInf(E valeur) {
+
+        if (inferieur.getElement().compareTo(valeur) == 0) {
+            inferieur = inferieur.getSuivant();
+        } else {
+            Chainon<E> precedent = inferieur;
+            Chainon<E> courant = inferieur.getSuivant();
+            detacherChainon(precedent,courant,valeur);
+        }
+    }
+
+    /**
+     * Supprimer un element dans la liste superieur
+     *
+     * @param valeur element a supprimer de la liste superieur
+     */
+    public void supprimerSup(E valeur) {
+
+        if (superieur.getElement().compareTo(valeur) == 0) {
+            superieur = superieur.getSuivant();
+        } else {
+            Chainon<E> precedent = superieur;
+            Chainon<E> courant = superieur.getSuivant();
+            detacherChainon(precedent,courant,valeur);
+        }
+    }
+
+    /**
+     * Détache le chainon qui contient l'element égale à la valeur donnée en argument
+     *
+     * @param precedent
+     * @param courant
+     * @param valeur
+     */
+    public void detacherChainon(Chainon<E> precedent, Chainon<E> courant, E valeur) {
+
+        while (courant != null && courant.getElement().compareTo(valeur) != 0) {
+            precedent = courant;
+            courant = courant.getSuivant();
+        }
+
+        if (courant != null) {
+            precedent.setSuivant(courant.getSuivant());
+        }
+    }
+
+    /**
+     * Verifier qu'un element est contenue dans une liste chainée
+     * @param valeur
+     * @param premierChainon
+     * @return
+     */
+    public boolean contient(E valeur, Chainon<E> premierChainon) {
+        boolean trouve = false;
+        Chainon<E> courant = premierChainon;
+
+        while (! trouve && courant != null) {
+            if (courant.getElement().compareTo(valeur) == 0 ) {
+                trouve= true;
+            } else {
+                courant= courant.getSuivant();
+            }
+        }
+
+        return trouve;
     }
 
     /**

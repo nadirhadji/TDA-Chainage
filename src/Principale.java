@@ -14,8 +14,8 @@ public class Principale {
 
         ListeMilieu<Integer> listeMilieu = new ListeMilieu();
 
-        listeMilieu.setInferieur(c1);
-        listeMilieu.setSuperieur(d1);
+        //listeMilieu.setInferieur(c1);
+        //listeMilieu.setSuperieur(d1);
 
         ListeMilieu<Integer> res = listeMilieu.diviser();
 
