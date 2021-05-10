@@ -2,8 +2,6 @@
  *  * @nom Hadji Nadir
  *  * @code_permanent HADN08069703
  *  *
- *  * @nom Cissé Saliou
- *  * @code_permanent CISS20129907
  *
  * Mon teste de charge prend environ 45 secondes.
  */
