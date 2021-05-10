@@ -1,11 +1,12 @@
 /**
- *
- * @param <E>
+ * Mon teste de charge prend environ 40 secondes.
  */
 public class ListeMilieu< E extends Comparable< E > > {
 
     private Chainon<E> inferieur;
     private Chainon<E> superieur;
+    private int tailleInferieur;
+    private int tailleSuperieur;
 
     /**
      * Initialise une {@code ListeMilieu} avec les chainons inferieur et superieur null.
@@ -13,6 +14,24 @@ public class ListeMilieu< E extends Comparable< E > > {
     public ListeMilieu() {
         this.inferieur = null;
         this.superieur = null;
+        this.tailleInferieur = 0;
+        this.tailleSuperieur = 0;
+    }
+
+    public void setInferieur(Chainon<E> inferieur) {
+        this.inferieur = inferieur;
+    }
+
+    public void setSuperieur(Chainon<E> superieur) {
+        this.superieur = superieur;
+    }
+
+    public void setTailleInferieur(int tailleInferieur) {
+        this.tailleInferieur = tailleInferieur;
+    }
+
+    public void setTailleSuperieur(int tailleSuperieur) {
+        this.tailleSuperieur = tailleSuperieur;
     }
 
     /**
@@ -34,97 +53,103 @@ public class ListeMilieu< E extends Comparable< E > > {
 
         ListeMilieu<E> resultat = new ListeMilieu<>();
 
-        Chainon<E> inf = inferieur;
-        Chainon<E> sup = superieur;
+        Chainon<E> sup = this.superieur;
 
-        remanier(this,sup);
-        remanier(resultat,inf);
+        try {
+            modifierResultat(sup,resultat);
+            modifierCourant();
+        } catch (ExceptionPileVide exceptionPileVide) {
+            exceptionPileVide.printStackTrace();
+        }
 
         return resultat;
     }
 
-    /**
-     * Transforme une {@code ListeMilieu} avec le {@code Chainon} en argument.
-     *
-     * Cette méthode est utilisé par la {@methode diviser} de {@code ListeMilieu}.
-     * Deux cas sont pris en compte par la méthode suivante :
-     *          cas 1 - {@code ListeMilieu} vide , {@code Chainon} non vide
-     *          cas 2 - {@code ListeMilieu} non vide , {@code Chainon} non vide
-     *
-     * Dans le cas 1 :
-     *      On va tranformer la ListeMilieu dite 'resultat' retourné par la
-     *      {@code ListeMilieu.diviser()}. Au début, 'resultat' est vide et on
-     *      veut créer une nouvelle ListeMilieu avec la liste inferieur courante.
-     *
-     * Dans le cas 2 :
-     *      On va transformer la ListeMilieu courante pour que la moitier des
-     *      élements les plus grand de liste superieur reste dans liste superieur
-     *      et que la moitier des élements les plus petit de liste superieurs
-     *      soit maintenant liée a la liste inferieur et ce classée du plus grand
-     *      au plus petit.
-     *
-     * @param listeMilieu la {@code ListeMilieu} à tranformer
-     * @param chainon le {@code Chainon} avec quoi tranformer listeMilieu
-     */
-    private void remanier(ListeMilieu<E> listeMilieu, Chainon<E> chainon) {
+    private void modifierResultat(Chainon<E> sup, ListeMilieu<E> resultat) throws ExceptionPileVide {
 
         Pile<Chainon<E>> pile = new Pile<>();
-
+        int nbSuperieur = tailleSuperieur;
         //l'indice de début de la seconde moitiée des élements de chainon
-        int limite = getIndiceMilieuChaine(chainon);
+        int limite = getIndiceMilieuChaine(sup);
 
-        /*On empile la premiere moitiée de chainon dans une pile de type FILO
-        pour pouvoir ensuite les liée dans le sens inverse.
-        */
         while (limite > 0) {
-            pile.empiler(chainon);
-            chainon = chainon.getSuivant();
+            pile.empiler(sup);
+            sup = sup.getSuivant();
             limite--;
+            nbSuperieur--;
         }
 
-        /*
-         Puisque chainon pointe maintenant vers le premier élement de la deuxieme moitier
-         du chainon initiale, on peut l'affecter a listeMilieu.inferieur si dans la methode
-         appelante chainon fait reference a listeMilieu.inferieur. ou sinon a
-         listeMilieu.superieur dans le cas inverse
-         */
-        if(listeMilieu.inferieur == null)
-            listeMilieu.inferieur = chainon;
-        else
-            listeMilieu.superieur = chainon;
+        resultat.setSuperieur(sup);
+        resultat.setTailleSuperieur(nbSuperieur);
 
-        /*
-        Cette partie va s'occuper de depiler 1 a 1 les élements de la pile pour constituer
-        une liste chainée dans le sens inverse.
-         */
-        try {
-            Chainon<E> aux = pile.depiler();
-            Chainon<E> teteDeChaine = aux;
-            Chainon<E> buff = null;
-
-            while (!pile.estVide()) {
-                buff = pile.depiler();
-                aux.setSuivant(buff);
-                aux = buff;
-            }
-
-            //Faire pointer le dernier element de la chaine vers null pour marquer la fin de la chaine.
-            aux.setSuivant(null);
-
-            /*
-            Si la fonction appelante fait reference a listeMilieu.superieur en ce qui conserne chainon,
-            alors la nouvelle liste chainée constituée sera placé dans listeMilieu.inferieur.
-            Si la fonction appelante fait reference a listeMilieu.inferieur en ce qui conserne chainon,
-            alors la nouvelle liste chainée constituée sera placé dans listeMilieu.superieur.
-            */
-            if(listeMilieu.superieur == null)
-                listeMilieu.superieur = teteDeChaine;
-            else
-                listeMilieu.inferieur = teteDeChaine;
-
-        } catch (ExceptionPileVide exceptionPileVide) {
-            exceptionPileVide.printStackTrace();
+        if(pile.estVide()){
+            resultat.setInferieur(null);
+            resultat.setTailleInferieur(0);
         }
+        else {
+            resultat.setTailleInferieur(pile.getTaille());
+            resultat.setInferieur(inverserChaine(pile));
+        }
+
+        resultat.equilibrerListeMilieu();
+    }
+
+    /**
+     * Empiler la premiere moitier de liste superieur et retourner la pile. Puis affecter
+     * a superieur courant la deuxieme moitier de superieur.
+     *
+     * @return une pile contenant la premiere moitier des chainons
+     */
+    private void modifierCourant() throws ExceptionPileVide {
+
+        Pile<Chainon<E>> pile = new Pile<>();
+        int nbSuperieur = 0;
+        //l'indice de début de la seconde moitiée des élements de chainon
+        int limite = getIndiceMilieuChaine(inferieur);
+
+        while (limite > 0) {
+            pile.empiler(inferieur);
+            inferieur = inferieur.getSuivant();
+            limite--;
+            tailleInferieur--;
+            nbSuperieur++;
+        }
+
+        if (!pile.estVide()) {
+            superieur = inverserChaine(pile);
+            tailleSuperieur = nbSuperieur;
+        }
+        else {
+            superieur = null;
+            tailleSuperieur = 0;
+        }
+
+        equilibrerListeMilieu();
+    }
+
+    /**
+     * Former une liste chainée a partir des elements dans une {@code Pile}
+     *
+     * @param pile une pile de donnée de type FILO {@code Pile}
+     * @return ListeChainée nouvellement formé
+     * @throws ExceptionPileVide exception lancé si la pile est vide
+     */
+    private Chainon<E> inverserChaine(Pile<Chainon<E>> pile) throws ExceptionPileVide {
+
+        Chainon<E> aux = pile.depiler();
+        Chainon<E> teteDeChaine = aux;
+        Chainon<E> buff = null;
+
+        while (!pile.estVide()) {
+            buff = pile.depiler();
+            aux.setSuivant(buff);
+            aux = buff;
+        }
+
+        //Faire pointer le dernier element de la chaine vers null pour marquer la fin de la chaine.
+        aux.setSuivant(null);
+
+        return teteDeChaine;
     }
 
     /**
@@ -134,19 +159,25 @@ public class ListeMilieu< E extends Comparable< E > > {
      */
     public void inserer( E valeur ) {
 
-        int tailleDiff;
-
-        if(inferieur == null)
+        if(inferieur == null) {
             inferieur = new Chainon<E>(valeur);
+            tailleInferieur++;
+        }
 
-        else if ( inferieur.getElement().compareTo(valeur) > 0 )
+        else if ( inferieur.getElement().compareTo(valeur) > 0 ){
             insererInf(valeur);
+        }
 
-        else if (superieur == null)
-            superieur = new Chainon<E>(valeur);
+        else if (superieur == null){
+            if (inferieur.getElement().compareTo(valeur) != 0) {
+                superieur = new Chainon<E>(valeur);
+                tailleSuperieur++;
+            }
+        }
 
-        else
+        else {
             insererSup(valeur);
+        }
 
         equilibrerListeMilieu();
 
@@ -157,7 +188,7 @@ public class ListeMilieu< E extends Comparable< E > > {
      */
     public void equilibrerListeMilieu() {
 
-        int tailleDiff = taille(inferieur) - taille(superieur);
+        int tailleDiff = tailleInferieur - tailleSuperieur;
 
         if(tailleDiff > 1)
             deplacerMaxInferieur();
@@ -174,21 +205,29 @@ public class ListeMilieu< E extends Comparable< E > > {
 
         Chainon<E> ombre = null;
         Chainon<E> courant = superieur;
+        boolean egaliteTrouve = false;
 
         while(courant != null && courant.getElement().compareTo(valeur) < 0 ) {
+
+            if( courant.getElement().compareTo(valeur) == 0)
+                egaliteTrouve = true;
+
             ombre = courant;
             courant = courant.getSuivant();
         }
 
-        Chainon<E> nouveau = new Chainon<>(valeur);
+        if(!egaliteTrouve) {
+            Chainon<E> nouveau = new Chainon<>(valeur);
 
-        if(ombre == null) {
-            nouveau.setSuivant(courant);
-            superieur = nouveau;
-        }
-        else {
-            ombre.setSuivant(nouveau);
-            nouveau.setSuivant(courant);
+            if(ombre == null) {
+                nouveau.setSuivant(courant);
+                superieur = nouveau;
+            }
+            else {
+                ombre.setSuivant(nouveau);
+                nouveau.setSuivant(courant);
+            }
+            tailleSuperieur++;
         }
     }
 
@@ -201,21 +240,28 @@ public class ListeMilieu< E extends Comparable< E > > {
 
         Chainon<E> ombre = null;
         Chainon<E> courant = inferieur;
+        boolean egaliteTrouve = false;
 
         while(courant != null && courant.getElement().compareTo(valeur) > 0 ) {
+
+            if(courant.getElement().compareTo(valeur) == 0)
+                egaliteTrouve = true;
             ombre = courant;
             courant = courant.getSuivant();
         }
 
-        Chainon<E> nouveau = new Chainon<>(valeur);
+        if(!egaliteTrouve) {
+            Chainon<E> nouveau = new Chainon<>(valeur);
 
-        if(ombre == null) {
-            nouveau.setSuivant(courant);
-            inferieur = nouveau;
-        }
-        else {
-            ombre.setSuivant(nouveau);
-            nouveau.setSuivant(courant);
+            if(ombre == null) {
+                nouveau.setSuivant(courant);
+                inferieur = nouveau;
+            }
+            else {
+                ombre.setSuivant(nouveau);
+                nouveau.setSuivant(courant);
+            }
+            tailleInferieur++;
         }
     }
 
@@ -227,6 +273,8 @@ public class ListeMilieu< E extends Comparable< E > > {
         inferieur = inferieur.getSuivant();
         maxInferieur.setSuivant(superieur);
         superieur = maxInferieur;
+        tailleInferieur--;
+        tailleSuperieur++;
     }
 
     /**
@@ -237,6 +285,8 @@ public class ListeMilieu< E extends Comparable< E > > {
         superieur = superieur.getSuivant();
         minSuperieur.setSuivant(inferieur);
         inferieur = minSuperieur;
+        tailleInferieur++;
+        tailleSuperieur--;
     }
 
     /**
@@ -303,11 +353,15 @@ public class ListeMilieu< E extends Comparable< E > > {
      */
     public void supprimer( E valeur) {
 
-        if(inferieur != null && contient(valeur,inferieur))
+        if(inferieur != null && contient(valeur,inferieur)){
             supprimerInf(valeur);
+            tailleInferieur--;
+        }
 
-        else if(superieur != null && contient(valeur,superieur))
+        else if(superieur != null && contient(valeur,superieur)){
             supprimerSup(valeur);
+            tailleSuperieur--;
+        }
 
         equilibrerListeMilieu();
     }
@@ -363,8 +417,17 @@ public class ListeMilieu< E extends Comparable< E > > {
         }
     }
 
+    public boolean contient(E valeur) {
+
+        boolean dansInferieur = contient(valeur,inferieur);
+        boolean dansSuperieur = contient(valeur,superieur);
+
+        return dansInferieur || dansSuperieur;
+    }
+
     /**
      * Verifier qu'un element est contenue dans une liste chainée
+     *
      * @param valeur
      * @param premierChainon
      * @return
@@ -389,7 +452,7 @@ public class ListeMilieu< E extends Comparable< E > > {
      * @return le nombre d'element dans la ListeMilieu courante
      */
     public int taille() {
-        return taille(inferieur) + taille(superieur);
+        return (tailleSuperieur+tailleInferieur);
     }
 
     /**
@@ -429,7 +492,7 @@ public class ListeMilieu< E extends Comparable< E > > {
         int taille = taille(chainon);
         int resultat = taille / 2;
 
-        if(taille % 2 != 0)
+        if( (taille >= 2) && (taille % 2 != 0) )
             resultat = resultat + 1;
 
         return resultat;

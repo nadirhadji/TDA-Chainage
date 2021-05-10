@@ -698,7 +698,6 @@ class ListeMilieuTest {
         assertEquals( 3, d.taille() );
     }
 
-
     @Test
     void diviser_sixValeurs_milieuOriginal() {
         ListeMilieu< Integer > a = construire( -12, -9, 1, 3, 8, 15 );
@@ -830,7 +829,6 @@ class ListeMilieuTest {
     //------------------------------------------------
     // Test charge
     // 12.510 secondes chez moi.
-    /**
     @Test
     void charge() {
         final int NOMBRE_CHOIX = 100_000;
@@ -847,5 +845,4 @@ class ListeMilieuTest {
 
         assertTrue( a.taille() <= NOMBRE_CHOIX );
     }
-    */
 }
